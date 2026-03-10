@@ -12,6 +12,7 @@ files = glob.glob(os.path.join(folder, "*.xyz"))
 
 print(f"Found {len(files)} files")
 
+# Read simulated GB files
 def read_gb_xyz(filename):
 
     with open(filename) as f:
@@ -35,8 +36,42 @@ def read_gb_xyz(filename):
 
     return misorientation, line_angle, box, coords
 
+# Read experimental GB files
+def read_exp_gb_xyz(filename):
 
-# Loop through files
+    # 1. Parse angles from filename
+    
+    m = re.search(r'tM=([\d.]+)deg_tL=([\d.]+)deg', filename)
+
+    misorientation = float(m.group(1))
+    line_angle = float(m.group(2))
+
+    # 2. Read coordinates
+
+    coords = []
+
+    with open(filename) as f:
+        lines = f.readlines()
+
+    for line in lines:
+
+        parts = line.split()
+
+        # coordinate lines have exactly 3 numbers
+        if len(parts) == 3:
+
+            try:
+                x, y, z = map(float, parts)
+                coords.append([x, y, z])
+            except:
+                pass
+
+    coords = np.array(coords)
+
+    return misorientation, line_angle, coords
+
+
+# Loop through files (change gb/exp_gb as needed)
 for file in files:
 
     mis, angle, box, atoms = read_gb_xyz(file)
