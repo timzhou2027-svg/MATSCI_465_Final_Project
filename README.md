@@ -1,11 +1,3 @@
-Created Repository
-20260225 created.
-
-
-
-
-
-
 
 # Graphene Grain Boundary Multislice Simulation
 
