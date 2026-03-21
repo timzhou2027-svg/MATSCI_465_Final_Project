@@ -48,3 +48,73 @@ It generates a comparison plot for three defocus conditions:
     * *Example*: `thetam_13.0_thetal_4.0.png`
 * **Format**: Pure grayscale PNG using `plt.imsave`. This exports the raw intensity matrix without axes or labels, ideal for quantitative analysis.
 
+# Graphene Grain Boundary Bloch-Wave Analysis
+
+## 1. Prerequisites
+Ensure the following Python libraries are installed in your environment:
+
+* **NumPy**: Matrix operations, nearest-neighbor calculations, and linear algebra for strain and orientation mapping.  
+* **Matplotlib**: Visualization of band contrast, strain maps, and defect locations.  
+* **SciPy (cKDTree)**: Efficient nearest-neighbor search for lattice orientation and strain computations.  
+* **NetworkX**: Graph-based ring detection and bond graph traversal.  
+* **OS & Glob**: File handling and path management.
+
+---
+
+## 2. Workflow
+
+### Phase 1: Data Preparation
+* **File Placement**: Place `.xyz` files into the `/BlochWave_pipeline` directory.  
+* **Data Format**:  
+  * **Line 1**: Optional metadata (misorientation, line angle).  
+  * **Line 2**: Box dimensions ($S_x, S_y, S_z$).  
+  * **Line 3+**: Atomic coordinates ($x, y, z$ in Å).  
+* **Setup**: Update the `folder` path variable in the script to match your local directory.  
+
+---
+
+### Phase 2: Lattice Orientation & Neighbor Analysis
+1. **KD-Tree Construction**: Finds k-nearest neighbors for each atom to calculate bond vectors.  
+2. **Bond Angles**: Computes $\phi_{ij} = \arctan2(y_j - y_i, x_j - x_i)$ for each neighbor pair.  
+3. **Local Orientation**: Averages bond angles over neighbors to estimate $\theta_i$ for band contrast and excitation error calculations.  
+
+---
+
+### Phase 3: Band Contrast Calculation
+* **Excitation Error**:  
+$$s_g = \alpha \, \theta_i$$  
+Maps local lattice misorientation to deviation from Bragg condition.  
+* **Effective Extinction Distance**:  
+$$\xi_{\mathrm{eff}} = \frac{\xi_g}{\sqrt{1 + (s_g \xi_g)^2}}$$  
+* **Diffracted Intensity**:  
+$$I_g = \sin^2 \left( \frac{\pi t}{\xi_{\mathrm{eff}}} \right)$$  
+* **Band Contrast**:  
+$$C = | I_g - 0.5 |$$  
+
+---
+
+### Phase 4: Strain Mapping & Elastic Energy
+1. Compute local displacement vectors $\mathbf{u}_{ij} = \mathbf{r}_{ij} - \langle \mathbf{r}_{ij} \rangle$.  
+2. Fit deformation gradient tensor $\mathbf{F}$ to approximate local linear strain.  
+3. Calculate symmetric strain tensor:  
+$$\boldsymbol{\varepsilon} = \frac{1}{2} (\mathbf{F} + \mathbf{F}^\top)$$  
+4. Estimate local elastic energy:  
+$$\gamma_i = \frac{1}{2} k \, \mathrm{Tr}(\boldsymbol{\varepsilon}_i^2) d_0^2$$  
+
+---
+
+### Phase 5: Defect Ring Detection
+1. Convert atomic coordinates into a **bond graph** using nearest neighbors.  
+2. Traverse the graph to extract **closed cycles**, classify by size, and detect defect rings (e.g., 5–7 pairs).  
+3. Visualize ring positions over the band contrast or strain map.
+
+---
+
+## 3. Output & Export
+* **Band Contrast Maps**: Grayscale images over $(x, y)$ coordinates.  
+* **Strain Energy Maps**: Visual heatmaps of local elastic energy.  
+* **Defect Overlay**: Rings (5–7, etc.) plotted on top of band contrast or strain maps.  
+* **File Naming Convention**:  
+`thetam_{mis}_thetal_{angle}_band.png`  
+*Example*: `thetam_13.0_thetal_4.0_band.png`  
+* **Format**: PNG images for visualization; numerical arrays can be exported via `np.save` for further analysis.
